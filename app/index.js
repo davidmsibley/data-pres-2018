@@ -597,16 +597,23 @@
       /* ~~~~~~~~ Basemap Layers ~~~~~~~~ */
        
       // basemaps from Open Street Map
-      const osmhot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors', 
-        label: "OpenStreetMap Humanitarian"
-      }).addTo(map);
+      // const osmhot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      //   attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors', 
+      //   label: "OpenStreetMap Humanitarian"
+      // });
+
+      // CARTO Positron
+      const positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        label: 'CARTO Positron'
+      });
 
       // Esri basemaps 
       const esrisat = L.esri.basemapLayer('Imagery', {label: "Esri Satellite"});
       
       // add the basemap control to the map  
-      var basemaps = [osmhot, esrisat]; 
+      var basemaps = [positron, esrisat]; 
+      basemaps[0].addTo(map);
       map.addControl(L.control.basemaps({
          basemaps: basemaps, 
          tileX: 0, 
