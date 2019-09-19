@@ -519,11 +519,6 @@
               controls: [
                 new CheckboxControl()
               ]
-            },
-            "Proxy_Data": {
-              controls: [
-                new CheckboxControl()
-              ]
             }
           }
         }
@@ -596,23 +591,29 @@
        
       /* ~~~~~~~~ Basemap Layers ~~~~~~~~ */
        
-      // basemaps from Open Street Map
+      // // basemaps from Open Street Map
       // const osmhot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       //   attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors', 
       //   label: "OpenStreetMap Humanitarian"
       // });
 
-      // CARTO Positron
-      const positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      // // CARTO Positron
+      // const positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      //   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      //   label: 'CARTO Positron'
+      // });
+
+      // CARTO Voyager
+      const voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        label: 'CARTO Positron'
+        label: 'CARTO Voyager'
       });
 
       // Esri basemaps 
       const esrisat = L.esri.basemapLayer('Imagery', {label: "Esri Satellite"});
       
       // add the basemap control to the map  
-      var basemaps = [positron, esrisat]; 
+      var basemaps = [voyager, esrisat]; 
       basemaps[0].addTo(map);
       map.addControl(L.control.basemaps({
          basemaps: basemaps, 
@@ -864,6 +865,178 @@
   }
   customElements.define('table-layout', TableLayout);
 
+  /**
+   * https://stackoverflow.com/questions/10420352/converting-file-size-in-bytes-to-human-readable-string
+   * @param {*} a 
+   * @param {*} b 
+   * @param {*} c 
+   * @param {*} d 
+   * @param {*} e 
+   */
+  const fileSizeIEC = function(a,b,c,d,e){
+    return (b=Math,c=b.log,d=1024,e=c(a)/c(d)|0,a/b.pow(d,e)).toFixed(2)
+    +' '+(e?'KMGTPEZY'[--e]+'iB':'Bytes')
+   };
+
+  class DownloadButton extends litElement.LitElement {
+    static get properties() {
+      return {
+        src: {
+          type: String
+        },
+        exists: {
+          type: Boolean,
+          reflect: true
+        },
+        fileSize: {
+          type: String,
+          attribute: false
+        }
+      };
+    }
+
+    constructor() {
+      super();
+    }
+
+    static get styles() {
+      return [
+        ...wgnhsCommon.styles,
+        litElement.css`
+      [data-closed] {
+        display: none;
+      }
+      .file-size {
+        font-size: var(--font-size-small);
+      }
+    `];
+    }
+
+    render() {
+      return litElement.html`
+    <button-link href="${this.src}" target="_blank" download>
+      <i slot="content-before" class="material-icons" title="Download">save_alt</i>
+      <span slot="content"><slot name="label">Download</slot></span>
+      <span slot="content-after" class="file-size"><slot name="detail">${this.fileSize}</slot></span>
+    </button-link>
+    `;
+    }
+
+    updated(prev) {
+      if (prev.has('src') && this.src) {
+        this.exists = false;
+        fetch(this.src, {
+          method: 'HEAD'
+        }).then(resp => {
+          if (resp.ok) {
+            this.exists = true;
+            let bytes = resp.headers.get('Content-Length');
+            if (bytes) {
+              this.fileSize = fileSizeIEC(bytes);
+            }
+          }
+        });
+      }
+    }
+  }
+  customElements.define('download-button', DownloadButton);
+
+  const TOGGLE_EVENT = 'toggle-pdf-panel';
+
+  class PDFSplitButton extends litElement.LitElement {
+    static get properties() {
+      return {
+        src: {
+          type: String
+        },
+        panel: {
+          type: Object,
+          attribute: false
+        },
+        closed: {
+          type: Boolean,
+          attribute: false
+        }
+      };
+    }
+
+    constructor() {
+      super();
+      this.closed=true;
+    }
+
+    static get styles() {
+      return [
+        ...wgnhsStyles.styles,
+        litElement.css`
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-gap: var(--border-radius);
+      }
+
+      .dl-button:not([exists]), .dl-button:not([exists]) + .view-button {
+        visibility: hidden;
+      }
+      `
+      ];
+    }
+
+    render() {
+      return litElement.html`
+    <div class="container">
+      <download-button class="dl-button" src="${this.src}">
+        <span slot="label"><slot name="download-text">Download</slot></span>
+        <span slot="detail"></span>
+      </download-button>
+      <app-collapsible class="view-button" @open="${this.toggle}" button>
+        <span slot="header"><slot name="view-text">View</slot></span>
+        <i slot="header-after" class="material-icons" title="View">${
+          (this.alt)?'chevron_left':'chevron_right'
+        }</i>
+      </app-collapsible>
+    </div>
+    `;
+    }
+
+    updated(prev) {
+      if ((prev.has('panel') || prev.has('src'))) {
+        if (this.panel && this.src) {
+          this.panel.request(this.src);
+        }
+      }
+    }
+
+    toggle(e) {
+      if (!this.closed) {
+        this.panel.hide();
+      } else {
+        this.panel.show(this.src);
+      }
+    }
+
+    handleAlt(e) {
+      if (e.detail.url === this.src) {
+        this.closed = false;
+      } else {
+        this.closed = true;
+      }
+      this.requestUpdate();
+    }
+
+    connectedCallback() {
+      super.connectedCallback();
+      this.__altHandler = this.handleAlt.bind(this);
+      document.addEventListener(TOGGLE_EVENT, this.__altHandler);
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener(TOGGLE_EVENT, this.__altHandler);
+      super.disconnectedCallback();
+    }
+  }
+  customElements.define('pdf-split-button', PDFSplitButton);
+
   class LogLayout extends litElement.LitElement {
     static get layoutName() {
       return 'geophysical log';
@@ -890,16 +1063,25 @@
 
     static get styles() {
       return litElement.css`
+      .dl-las:not([exists]) {
+        visibility: hidden;
+      }
     `;
     }
 
     render() {
       return litElement.html`
     <table-layout .info=${this.prepInfo()} .context=${this.context}></table-layout>
-    <pdf-view-button
+    <pdf-split-button
       .panel=${this.context.pdfpanel}
-      src="${'https://data.wgnhs.wisc.edu/geophysical-logs/' + this.info.Wid + '.pdf'}">
-    </pdf-view-button>
+      src="${'https://data.wgnhs.wisc.edu/borehole-geophysics/pdf/' + this.info.Wid + '.pdf'}">
+      <span slot="download-text">Download PDF</span>
+    </pdf-split-button>
+    <download-button
+      class="dl-las"
+      src="${'https://data.wgnhs.wisc.edu/borehole-geophysics/las/' + this.info.Wid + '.las'}">
+      <span slot="label">Download LAS</span>
+    </download-button>
     `;
     }
 
