@@ -628,11 +628,17 @@
             window.fetch(curr.source.geojson,{
               cache: 'no-store'
             })
-            .then((res) => res.json(), reason => console.log(reason))
+            .then((res) => {
+              return res.json()
+            }, reason => {
+              console.log(reason);
+            })
             .then((geojson)=>({
               name: curr[curr.prop],
               color: curr.color,
-              data: geojson}), reason => console.log(reason)));
+              data: geojson}), reason => {
+                console.log(reason);
+              }));
         }
         return result;
       }, []);
