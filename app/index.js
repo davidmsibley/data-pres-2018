@@ -626,11 +626,11 @@
         if (curr.source && curr.source.geojson) {
           result.push(
             window.fetch(curr.source.geojson)
-            .then((res) => res.json())
+            .then((res) => res.json(), reason => console.log(reason))
             .then((geojson)=>({
               name: curr[curr.prop],
               color: curr.color,
-              data: geojson})));
+              data: geojson}), reason => console.log(reason)));
         }
         return result;
       }, []);
@@ -686,7 +686,7 @@
           });
         });
         this._lookup = lookup;
-      });
+      }, reason => console.log(reason));
     }
 
     static getSiteCode(params) {
