@@ -1411,6 +1411,14 @@
         sources: {
           type: Array,
           attribute: false
+        },
+        uniques: {
+          type: Object,
+          attribute: false
+        },
+        layers: {
+          type: Object,
+          attribute: false
         }
       };
     }
@@ -1594,6 +1602,10 @@
           );
         wgnhsCommon.dispatch(this, 'filtered', {activePoints, counts}, true, true);
       }
+
+      if (!this.sources && this.uniques && this.layers) {
+        this.init(this.uniques, this.layers);
+      }
     }
 
     init(uniques, layers) {
@@ -1709,7 +1721,8 @@
   window.siteMap.init().then(function() {
     window.siteData = new SiteData(window.siteMap.layers);
     window.aggrData = siteData.aggrData;
-    filter.init(window.siteData.uniques, window.siteMap.layers);
+    filter.uniques = window.siteData.uniques;
+    filter.layers = window.siteMap.layers;
 
     var deselectFeature = function() {
       window.pdfPanel.hide();
