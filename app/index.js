@@ -625,7 +625,9 @@
       this.sources = filterLookup.reduce((result, curr) => {
         if (curr.source && curr.source.geojson) {
           result.push(
-            window.fetch(curr.source.geojson)
+            window.fetch(curr.source.geojson,{
+              cache: 'no-store'
+            })
             .then((res) => {
               return res.json()
             }, reason => {
@@ -934,7 +936,8 @@
       if (prev.has('src') && this.src) {
         this.exists = false;
         window.fetch(this.src, {
-          method: 'HEAD'
+          method: 'HEAD',
+          cache: 'no-store'
         }).then(resp => {
           if (resp.ok) {
             this.exists = true;
