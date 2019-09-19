@@ -626,7 +626,8 @@
         if (curr.source && curr.source.geojson) {
           result.push(
             window.fetch(curr.source.geojson,{
-              cache: 'no-store'
+              cache: 'no-store',
+              mode: 'cors'
             })
             .then((res) => {
               return res.json()
