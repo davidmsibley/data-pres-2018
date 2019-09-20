@@ -135,11 +135,33 @@
       font-size: var(--font-size-title);
       padding: var(--font-size-title) var(--font-size);
     }
-    section p {
-      margin: 0 var(--line-height);
+    .subtitle {
+      text-align: center;
+      color: var(--palette-accent);
     }
-    section h2 {
-      margin: 0 var(--border-radius);
+    .inner-content h3 {
+      color: var(--palette-900);
+      padding: var(--font-size-large) 0 var(--border-radius);
+    }
+    .inner-content p {
+      margin: 0 var(--font-size-small);
+      font-size: var(--font-size-small);
+      line-height: var(--font-size);
+    }
+    .inner-content p+p {
+      margin-top: var(--font-size-small);
+    }
+    .inner-accent {
+      font-weight: var(--font-weight-bold);
+      color: var(--palette-900);
+    }
+    .inner-accent::after {
+      content: "";
+      padding-right: var(--border-radius);
+    }
+    .inner-footer {
+      text-align: center;
+      margin: var(--font-size-small);
     }
     .brand-header {
       background-color: var(--palette-brand);
@@ -167,15 +189,74 @@
   <div id="app" data-view="app">
     <header class="brand-header">
       <a href="https://wgnhs.wisc.edu/">
-        <img class="brand-img" alt="Wisconsin Geological and Natural History Survey" src="css/wgnhs-long-reversed.png">
+        <img class="brand-img" alt="Wisconsin Geological and Natural History Survey" src="css/wgnhs-long-reversed.png"></img>
       </a>
     </header>
     <app-sidebar id="sidebar" class="left-panel" tabs='["details"]'>
       <div class="default-view">
-        <h1 class="title">Data Viewer</h1>
-        <section>
-          <map-filter id="filter"></map-filter>
-        </section>
+        <h1 class="title">WGNHS Data Viewer</h1>
+        <h2 class="subtitle">Geoscience data from the Wisconsin Geological Survey</h2>
+        <map-filter id="filter">
+          <div slot="0" class="inner-content">
+            <p>
+              This data viewer shows the locations of site data for collections of
+              geophysical logs and Quaternary core from the WGNHS geoscience information
+              management system Geobase.
+            </p>
+            <p>
+              <span class="inner-accent">Using the map:</span> Zoom in and click on a 
+              point for information about the data at that location. View subsets of 
+              the data based on site information and data type.
+            </p>
+          </div>
+          <div slot="1" class="inner-content">
+              <h3 class="inner-title">Geophysical logs</h3>
+              <p>
+                This application shows the locations of borehole geophysical log data 
+                and presents those logs in downloadable PDF and LAS formats.
+              </p>
+              <p>
+                The data viewer only includes digital log data collected after 1992.
+                Earlier logs have been archived and are available for historical purposes 
+                only.
+              </p>
+              <p>
+                <span class="inner-accent">What is a geophysical log?</span> Geophysical 
+                logs are created by lowering and raising a set of probes or instruments 
+                in a well or borehole. These probes record measurements of geology and 
+                groundwater such as electrical resistivity and potential, natural gamma 
+                radiation, fluid conductivity and temperature, and fluid flow rate. They 
+                also measure the diameter and shape of the borehole and can record digital 
+                or acoustic images of the rock.
+              </p>
+              <p>
+                <span class="inner-accent">Who uses them?</span> These logs are used by 
+                municipal water utility operators, geoscience researchers, and water-quality 
+                regulators to better understand the geologic setting and groundwater system.
+              </p>
+          </div>
+          <div slot="2" class="inner-content">
+              <h3 class="inner-title">Quaternary core</h3>
+              <p>
+                Sediment core samples provide insight into the glacial history of Wisconsin, 
+                the distribution of surficial deposits used in sand and gravel mining, and 
+                the character of shallow unconfined aquifers.
+              </p>
+              <p>
+                This online collection includes locations of samples and types of data 
+                collected after 2011.
+              </p>
+          </div>
+        </map-filter>
+        <div class="inner-content inner-footer">
+            <p>
+              Feedback, questions or accessibility issues: <a href="mailto:data@wgnhs.wisc.edu">data@wgnhs.wisc.edu</a>
+            </p>
+            <p>
+              <a href="https://www.wisc.edu/privacy-notice/" target="_blank">Privacy Notice</a>
+              | © 2019 The Board of Regents of the <a href="https://www.wisconsin.edu/">University of Wisconsin System</a>
+            </p>
+          </div>
       </div>
 
       <div slot="details">
@@ -193,6 +274,6 @@
       class="right-panel positioned"
       data-closed></pdf-view-panel>
   </div>
-  <script src="app/index.js"></script>
+  <script src="app/index.min.js"></script>
 </body>
 </html>
