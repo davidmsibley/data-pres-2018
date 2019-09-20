@@ -95,7 +95,7 @@ export class MapFilter extends LitElement {
   renderFilterGroups() {
     let name=0, config=1;
     return this.filterGroups.map((group, index) => html`
-      <slot name="${index}"></slot>
+      <slot name="${index}-before"></slot>
       <app-collapsible class="group"
         ?open=${group.open} @open=${this._handle(group)}>
         <i slot="header-before" class="material-icons collapse-icon"></i>
@@ -136,6 +136,7 @@ export class MapFilter extends LitElement {
           `)}
         </div>
       </app-collapsible>
+      <slot name="${index}-after"></slot>
     `);
   }
 
