@@ -18,7 +18,7 @@ After cloning the repository, bring up a terminal in the repository's root direc
 npm start
 ```
 The `npm start` command is configured to build the project, then serve the project 
-at `http://localhost:8080/data-viewer/`
+at `http://localhost:8080/data-pres-2018/`
 
 The server will watch for source changes and automatically refresh the browser.
 

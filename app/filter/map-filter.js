@@ -41,6 +41,7 @@ export class MapFilter extends LitElement {
       }
 
       .label {
+        color: var(--palette-900);
         font-weight: var(--font-weight-bold);
       }
 
@@ -66,8 +67,16 @@ export class MapFilter extends LitElement {
         content: "expand_more"
       }
 
-      .group[open] > .collapse-icon::before {
+      [open] > .collapse-icon::before {
         content: "expand_less"
+      }
+
+      .raw-source-button {
+        display: flex;
+        margin-top: var(--line-height);
+      }
+      .raw-source-button > * {
+        font-size: var(--font-size);
       }
     `];
   }
@@ -134,6 +143,12 @@ export class MapFilter extends LitElement {
               </div>
             `)}
           `)}
+          ${(group.source && group.source.user)?html`
+          <button-link href="${group.source.user}" class="raw-source-button">
+            <span slot="content">View data source</span>
+            <i slot="content-after" class="material-icons">open_in_new</i>
+          </button-link>
+          `:''}
         </div>
       </app-collapsible>
       <slot name="${index}-after"></slot>
@@ -261,21 +276,22 @@ export class MapFilter extends LitElement {
       return result;
     }
 
-    const result = sources.map((layer) => {
+    const result = sources.reduce((result, layer) => {
       const activePoints = new Set();
       Object.entries(layer._layers).forEach((ent) => {
         if (resolve(ent[1].feature.properties)) {
           activePoints.add('' + SiteMap.getSiteCode(ent[1].feature.properties));
         }
       });
-      return activePoints;
-    });
+      result[layer.options.name] = activePoints;
+      return result;
+    }, {});
 
     return result;
   }
 
   static getResultsInfo(matchClass, include, filter, sources, activePoints) {
-    const result = sources.map((layer, i) => {
+    const result = sources.map((layer) => {
       let stats = {};
       stats.name = layer.options.name;
       stats.included = include.some((el) => {
@@ -291,7 +307,7 @@ export class MapFilter extends LitElement {
 
       let entries = Object.entries(layer._layers);
       stats.total = entries.length;
-      stats.current = activePoints[i].size;
+      stats.current = activePoints[layer.options.name].size;
 
       return stats;
     });

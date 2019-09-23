@@ -116,6 +116,10 @@ export class SiteMap extends window.L.Evented {
     });
   }
 
+  static getDataType(params) {
+    return params['Data_Type'];
+  }
+
   static getSiteCode(params) {
     let keys = ['Wid', 'WGNHS_ID', 'ID', 'Site_Code'];
     let result = keys.reduce((prev, curr) => {
@@ -197,12 +201,9 @@ export class SiteMap extends window.L.Evented {
     this.map.fire('filterpoints', {
       detail: {
         resolve: (props) => {
-          return activePoints.reduce((prev, activeSet) => {
-            const code = SiteMap.getSiteCode(props);
-            const has = activeSet.has('' + code);
-            const result = prev || has;
-            return result;
-          }, false);
+          const activeSet = activePoints[SiteMap.getDataType(props)];
+          const result = activeSet.has('' + SiteMap.getSiteCode(props));
+          return result;
         }
       }
     });

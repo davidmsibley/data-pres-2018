@@ -14,7 +14,7 @@
     "develop:watch": "run-p develop:watch-build develop:watch-copy develop:serve",
     "develop:watch-build": "rollup -c -w",
     "develop:watch-copy": "onchange \"*.html\" \"css/*\" \".nojekyll\" \"404.html\" -- npx cpy {{changed}} dist/ --parents",
-    "develop:serve": "live-server --no-css-inject --mount=/data-viewer/:dist/ --open=/data-viewer/ --middleware=\"../../dev/sghpa.js\" --wait=1000 dist/",
+    "develop:serve": "live-server --no-css-inject --mount=/data-pres-2018/:dist/ --open=/data-pres-2018/ --middleware=\"../../dev/sghpa.js\" --wait=1000 dist/",
     "start": "run-s develop",
     "pages": "run-s build pages:ghpages",
     "pages:ghpages": "gh-pages -d dist",

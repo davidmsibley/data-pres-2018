@@ -30,7 +30,7 @@ export class CheckboxControl {
   }
   get next() {
     return html`
-      <input type="checkbox">
+      <toggle-switch style="justify-content: start;"></toggle-switch>
     `;
   }
   handle(context) {
