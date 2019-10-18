@@ -13,7 +13,7 @@
     "netlify": "run-s netlify:clean netlify:prepare build netlify:copy-resources",
     "netlify:clean": "rimraf dist-netlify",
     "netlify:prepare": "mkdirp dist-netlify/data-viewer",
-    "netlify:copy-resources": "cpy \"dist/\" dist-netlify/data-viewer/",
+    "netlify:copy-resources": "cpy '**/*' '../dist-netlify/data-viewer/' --cwd=dist --parents",
     "develop": "run-s build:copy-resources develop:watch",
     "develop:watch": "run-p develop:watch-build develop:watch-copy develop:serve",
     "develop:watch-build": "rollup -c -w",

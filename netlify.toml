@@ -6,3 +6,8 @@
   from = "/data-viewer/*"
   to = "/data-viewer/404.html"
   status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/data-viewer/"
+  status = 302
