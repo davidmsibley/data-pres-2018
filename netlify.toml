@@ -1,0 +1,8 @@
+[build]
+  publish = "dist-netlify/"
+  command = "npm run netlify"
+
+[[redirects]]
+  from = "/data-viewer/*"
+  to = "/data-viewer/404.html"
+  status = 200
