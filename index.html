@@ -114,6 +114,7 @@
     }
 
     [data-view] {
+      height: 100%;
       position: fixed;
       top: 0;
       bottom: 0;
@@ -180,6 +181,13 @@
       bottom: 0;
       left: 0;
     }
+
+    .collapse-icon::before {
+      content: "expand_more"
+    }
+    [open] > .collapse-icon::before {
+      content: "expand_less"
+    }
   </style>
 </head>
 <body>
@@ -196,58 +204,58 @@
       <div class="default-view">
         <h1 class="title">WGNHS Data Viewer</h1>
         <h2 class="subtitle">Geoscience data from the Wisconsin Geological Survey</h2>
-        <map-filter id="filter">
-          <div slot="0" class="inner-content">
+        <div class="inner-content">
+          <p>
+            This interactive map shows locations of site data for our collections of 
+            geophysical logs and Quaternary core.
+          </p>
+          <p>
+            <span class="inner-accent">Using the map:</span> Click on a point for 
+            information about available data. To filter data, click on the data bars 
+            below. To learn more about the collections, click on the About bar.
+          </p>
+        </div>
+        <app-collapsible>
+          <i slot="header-before" class="material-icons collapse-icon"></i>
+          <span slot="header">About</span>
+          <div slot="content" class="inner-content">
+            <h3 class="inner-title">Geophysical logs</h3>
             <p>
-              This data viewer shows the locations of site data for collections of
-              geophysical logs and Quaternary core from the WGNHS geoscience information
-              management system Geobase.
+              This application shows the locations of borehole geophysical log data 
+              and presents those logs in downloadable PDF and LAS formats.
             </p>
             <p>
-              <span class="inner-accent">Using the map:</span> Zoom in and click on a 
-              point for information about the data at that location. View subsets of 
-              the data based on site information and data type.
+              The data viewer only includes digital log data collected after 1992.
+              Earlier logs have been archived and are available for historical purposes 
+              only.
+            </p>
+            <p>
+              <span class="inner-accent">What is a geophysical log?</span> Geophysical 
+              logs are created by lowering and raising a set of probes or instruments 
+              in a well or borehole. These probes record measurements of geology and 
+              groundwater such as electrical resistivity and potential, natural gamma 
+              radiation, fluid conductivity and temperature, and fluid flow rate. They 
+              also measure the diameter and shape of the borehole and can record digital 
+              or acoustic images of the rock.
+            </p>
+            <p>
+              <span class="inner-accent">Who uses them?</span> These logs are used by 
+              municipal water utility operators, geoscience researchers, and water-quality 
+              regulators to better understand the geologic setting and groundwater system.
+            </p>
+            <h3 class="inner-title">Quaternary core</h3>
+            <p>
+              Sediment core samples provide insight into the glacial history of Wisconsin, 
+              the distribution of surficial deposits used in sand and gravel mining, and 
+              the character of shallow unconfined aquifers.
+            </p>
+            <p>
+              This online collection includes locations of samples and types of data 
+              collected after 2011.
             </p>
           </div>
-          <div slot="1" class="inner-content">
-              <h3 class="inner-title">Geophysical logs</h3>
-              <p>
-                This application shows the locations of borehole geophysical log data 
-                and presents those logs in downloadable PDF and LAS formats.
-              </p>
-              <p>
-                The data viewer only includes digital log data collected after 1992.
-                Earlier logs have been archived and are available for historical purposes 
-                only.
-              </p>
-              <p>
-                <span class="inner-accent">What is a geophysical log?</span> Geophysical 
-                logs are created by lowering and raising a set of probes or instruments 
-                in a well or borehole. These probes record measurements of geology and 
-                groundwater such as electrical resistivity and potential, natural gamma 
-                radiation, fluid conductivity and temperature, and fluid flow rate. They 
-                also measure the diameter and shape of the borehole and can record digital 
-                or acoustic images of the rock.
-              </p>
-              <p>
-                <span class="inner-accent">Who uses them?</span> These logs are used by 
-                municipal water utility operators, geoscience researchers, and water-quality 
-                regulators to better understand the geologic setting and groundwater system.
-              </p>
-          </div>
-          <div slot="2" class="inner-content">
-              <h3 class="inner-title">Quaternary core</h3>
-              <p>
-                Sediment core samples provide insight into the glacial history of Wisconsin, 
-                the distribution of surficial deposits used in sand and gravel mining, and 
-                the character of shallow unconfined aquifers.
-              </p>
-              <p>
-                This online collection includes locations of samples and types of data 
-                collected after 2011.
-              </p>
-          </div>
-        </map-filter>
+        </app-collapsible>
+        <map-filter id="filter"></map-filter>
         <div class="inner-content inner-footer">
             <p>
               Feedback, questions or accessibility issues: <a href="mailto:data@wgnhs.wisc.edu">data@wgnhs.wisc.edu</a>

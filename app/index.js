@@ -33,7 +33,7 @@
     }
     get next() {
       return litElement.html`
-      <input type="checkbox">
+      <toggle-switch style="justify-content: start;"></toggle-switch>
     `;
     }
     handle(context) {
@@ -687,6 +687,10 @@
       });
     }
 
+    static getDataType(params) {
+      return params['Data_Type'];
+    }
+
     static getSiteCode(params) {
       let keys = ['Wid', 'WGNHS_ID', 'ID', 'Site_Code'];
       let result = keys.reduce((prev, curr) => {
@@ -768,12 +772,9 @@
       this.map.fire('filterpoints', {
         detail: {
           resolve: (props) => {
-            return activePoints.reduce((prev, activeSet) => {
-              const code = SiteMap.getSiteCode(props);
-              const has = activeSet.has('' + code);
-              const result = prev || has;
-              return result;
-            }, false);
+            const activeSet = activePoints[SiteMap.getDataType(props)];
+            const result = activeSet.has('' + SiteMap.getSiteCode(props));
+            return result;
           }
         }
       });
@@ -1317,6 +1318,7 @@
       }
 
       .label {
+        color: var(--palette-900);
         font-weight: var(--font-weight-bold);
       }
 
@@ -1342,8 +1344,16 @@
         content: "expand_more"
       }
 
-      .group[open] > .collapse-icon::before {
+      [open] > .collapse-icon::before {
         content: "expand_less"
+      }
+
+      .raw-source-button {
+        display: flex;
+        margin-top: var(--line-height);
+      }
+      .raw-source-button > * {
+        font-size: var(--font-size);
       }
     `];
     }
@@ -1410,6 +1420,12 @@
               </div>
             `)}
           `)}
+          ${(group.source && group.source.user)?litElement.html`
+          <button-link href="${group.source.user}" class="raw-source-button">
+            <span slot="content">View data source</span>
+            <i slot="content-after" class="material-icons">open_in_new</i>
+          </button-link>
+          `:''}
         </div>
       </app-collapsible>
     `);
@@ -1536,21 +1552,22 @@
         return result;
       };
 
-      const result = sources.map((layer) => {
+      const result = sources.reduce((result, layer) => {
         const activePoints = new Set();
         Object.entries(layer._layers).forEach((ent) => {
           if (resolve(ent[1].feature.properties)) {
             activePoints.add('' + SiteMap.getSiteCode(ent[1].feature.properties));
           }
         });
-        return activePoints;
-      });
+        result[layer.options.name] = activePoints;
+        return result;
+      }, {});
 
       return result;
     }
 
     static getResultsInfo(matchClass, include, filter, sources, activePoints) {
-      const result = sources.map((layer, i) => {
+      const result = sources.map((layer) => {
         let stats = {};
         stats.name = layer.options.name;
         stats.included = include.some((el) => {
@@ -1566,7 +1583,7 @@
 
         let entries = Object.entries(layer._layers);
         stats.total = entries.length;
-        stats.current = activePoints[i].size;
+        stats.current = activePoints[layer.options.name].size;
 
         return stats;
       });
