@@ -1,8 +1,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('lit-element'), require('wgnhs-common'), require('wgnhs-router'), require('wgnhs-styles'), require('wgnhs-pdf'), require('wgnhs-layout')) :
   typeof define === 'function' && define.amd ? define(['exports', 'lit-element', 'wgnhs-common', 'wgnhs-router', 'wgnhs-styles', 'wgnhs-pdf', 'wgnhs-layout'], factory) :
-  (global = global || self, factory(global.app = {}, global['wgnhs-common'], global['wgnhs-common'], global['wgnhs-router'], global['wgnhs-common'], global['wgnhs-pdf'], global['wgnhs-layout']));
-}(this, function (exports, litElement, wgnhsCommon, wgnhsRouter, wgnhsStyles, wgnhsPdf, wgnhsLayout) { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.app = {}, global['wgnhs-common'], global['wgnhs-common'], global['wgnhs-router'], global['wgnhs-common']));
+}(this, (function (exports, litElement, wgnhsCommon, wgnhsRouter, wgnhsStyles) { 'use strict';
 
   class FilterGroup {
     constructor(config) {
@@ -1768,4 +1768,4 @@
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-}));
+})));
