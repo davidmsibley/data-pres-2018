@@ -19,6 +19,7 @@ html {
     --row-black: #000000;
     --row-blue: #2346b4;
     --row-green: #33AA44;
+    --row-purple: purple;
     --row-orange: orange;
 
     --palette-white: var(--row-white);
@@ -30,6 +31,7 @@ html {
     --palette-black: var(--row-black);
     --palette-blue: var(--row-blue);
     --palette-green: var(--row-green);
+    --palette-purple: var(--row-purple);
     --palette-orange: var(--row-orange);
 
     --palette-active: var(--palette-orange);
@@ -38,6 +40,7 @@ html {
 
     --map-symbol-0: var(--palette-blue);
     --map-symbol-1: var(--palette-green);
+    --map-symbol-2: var(--palette-purple);
     --map-symbol-active: var(--palette-orange);
 
     --font-family: 'open_sansregular','Open Sans',sans_serif;
