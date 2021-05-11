@@ -50,7 +50,7 @@
           },
           resolve: function(feature) {
             // filter out features without the property
-            let isValid = !!feature[context.prop];
+            let isValid = !!feature[context.prop[feature['Data_Type']]];
             return isValid;
           }
         };
@@ -94,9 +94,9 @@
           },
           resolve: function(feature) {
             // filter out features without the property
-            let isValid = !!feature[context.prop];
+            let isValid = !!feature[context.prop[feature['Data_Type']]];
             if (isValid) {
-              isValid = predicate(feature[context.prop], input);
+              isValid = predicate(feature[context.prop[feature['Data_Type']]], input);
             }
             return isValid;
           }
@@ -120,15 +120,37 @@
       </select>
     `;
     }
-    init(uniques) {
-      if (!this.options) {
-        this.options = Array.from(uniques).sort();
+    init(lookup) {
+      const uniques = new Map();
+      const mappings = {};
+      if (lookup.source) {
+        mappings[lookup.source] = lookup.field;
+      }
+      if (lookup.members) {
+        lookup.members.forEach(({source, field}) => {
+          mappings[source] = field;
+        });
+      }
+      lookup.layers.forEach(({options, _layers}) => {
+        let key = mappings[options.name];
+        Object.values(_layers).forEach((point) => {
+          const val = point.feature.properties[key];
+          if (!!val) {
+            const top = val.trim().toUpperCase();
+            if (!uniques.has(top) || uniques.get(top) < val) {
+              uniques.set(top, val);
+            }
+          }
+        });
+      });
+      if (!this.options && uniques) {
+        this.options = Array.from(uniques.values()).sort();
       }
     }
     handle(context) {
       let result = null;
 
-      const input = context.target.nextElementSibling.value;
+      const input = ('' + context.target.nextElementSibling.value).trim().toUpperCase();
       // blank selects all, apply filter if non-blank
       if (input) {
         result = {
@@ -139,9 +161,9 @@
           },
           resolve: function(feature) {
             // filter out features without the property
-            let isValid = !!feature[context.prop];
+            let isValid = !!feature[context.prop[feature['Data_Type']]];
             if (isValid) {
-              const value = feature[context.prop];
+              const value = ('' + feature[context.prop[feature['Data_Type']]]).trim().toUpperCase();
               isValid = value === input;
             }
             return isValid;
@@ -175,9 +197,9 @@
           },
           resolve: function(feature) {
             // filter out features without the property
-            let isValid = !!feature[context.prop];
+            let isValid = !!feature[context.prop[feature['Data_Type']]];
             if (isValid) {
-              const value = ('' + feature[context.prop]).trim().toUpperCase();
+              const value = ('' + feature[context.prop[feature['Data_Type']]]).trim().toUpperCase();
               isValid = value === input;
             }
             return isValid;
@@ -211,9 +233,9 @@
           },
           resolve: function(feature) {
             // filter out features without the property
-            let isValid = !!feature[context.prop];
+            let isValid = !!feature[context.prop[feature['Data_Type']]];
             if (isValid) {
-              const value = ('' + feature[context.prop]).trim().toUpperCase();
+              const value = ('' + feature[context.prop[feature['Data_Type']]]).trim().toUpperCase();
               isValid = value.includes(input);
             }
             return isValid;
@@ -226,21 +248,43 @@
 
   class SiteData {
     constructor(layers) {
+      // // Define aggregated data for visualization
+      // this._aggrKeys = [
+      //   'County',
+      //   'Drill_Method',
+      //   'Project'
+      // ];
+      // this.aggrData = [];
+      // for (let l of layers) {
+      //   this.aggrData.push(SiteData._gatherAggrData(l, this._aggrKeys));
+      // }
 
-      // Define aggregated data for visualization
-      this._aggrKeys = [
-        'County',
-        'Drill_Method',
-        'Project'
-      ];
-      this.aggrData = [];
-      for (let l of layers) {
-        this.aggrData.push(SiteData._gatherAggrData(l, this._aggrKeys));
-      }
-
-      this.datas = this.aggrData.map((el)=>el.data).reduce((prev, curr)=>prev.concat(curr),[]);
+      // this.datas = this.aggrData.values().map((el)=>el.data).reduce((prev, curr)=>prev.concat(curr),[]);
       this.uniques = {};
-      this._aggrKeys.forEach((key) => this.uniques[key] = new Set(this.datas.map((el)=>el[key]).filter((el)=>!!el)));
+      // this._aggrKeys.forEach((key) => this.uniques[key] = new Set(this.datas.map((el)=>el[key]).filter((el)=>!!el)));
+    }
+
+    static buildFieldKey(source, field) {
+      let result = [];
+      if (field) {
+        if (source) {
+          result.push(source);
+        }
+        result.push(field);
+      }
+      return result.join('.');
+    }
+
+    static splitFieldKey(fieldKey) {
+      let result = {};
+      if (fieldKey) {
+        let split = fieldKey.split('.');
+        if (split.length > 1) {
+          result.source = split.shift();
+        }
+        result.field = split.shift();
+      }
+      return result;
     }
 
     static _gatherAggrData(layer, aggrKeys) {
@@ -271,6 +315,45 @@
       });
 
       return aggrData;
+    }
+
+    static get propLookup() {
+      let result = {};
+      filterLookup.forEach((fg) => {
+        fg.sections.forEach((section) => {
+          Object.entries(section.fields).forEach(([field, config]) => {
+            let source = (fg.prop && fg[fg.prop])?fg[fg.prop]:undefined;
+            let fieldKey = SiteData.buildFieldKey(source, field);
+            if (!result[fieldKey]) {
+              result[fieldKey] = {};
+            }
+            config.fieldKey = fieldKey;
+            Object.assign(result[fieldKey], config);
+            result[fieldKey].source = source;
+            result[fieldKey].field = field;
+            let alias = result[fieldKey].alias;
+            if (alias) {
+              if (!result[alias]) {
+                result[alias] = {};
+              }
+              if (!result[alias].members) {
+                result[alias].members = [];
+              }
+              result[alias].members.push(result[fieldKey]);
+            }
+            // result[fieldKey].assist = {};
+            // if (config.controls) {
+            //   for (let control of config.controls) {
+            //     Object.assign(result[fieldKey], SiteData.splitFieldKey(fieldKey))
+            //     if (control.createAssist) {
+            //       Object.assign(result[fieldKey].assist, control.createAssist(layers,fieldKey))
+            //     }
+            //   }
+            // }
+          });
+        });
+      });
+      return result;
     }
   }
 
@@ -337,18 +420,21 @@
                 new ContainsControl()
               ]
             },
-            "Wid": {
+            "WID": {
               title: 'WGNHS ID',
               controls: [
                 new TextControl()
               ]
             },
+            "Lat_Lon": {
+              //TODO!
+            }
           }
         }
       ]
     }),
     new FilterGroup({
-      title: "Geophysical Log data",
+      title: "Geophysical Log",
       prop: 'Data_Type',
       'Data_Type': 'geophysical log',
       source: {
@@ -361,6 +447,15 @@
       sections: [
         {
           fields: {
+            "Wid": {
+              alias: 'WID'
+            },
+            "SiteName": {
+              alias: 'Site_Name'
+            },
+            "County": {
+              alias: 'County'
+            },
             "RecentLog": {
               title: 'Most recent log (year)',
               controls: [
@@ -483,7 +578,7 @@
       ]
     }),
     new FilterGroup({
-      title: "Quaternary Core data",
+      title: "Quaternary Core",
       prop: 'Data_Type',
       'Data_Type': 'quaternary core',
       source: {
@@ -496,6 +591,15 @@
       sections: [
         {
           fields: {
+            "WGNHS_ID": {
+              alias: 'WID'
+            },
+            "Site_Name": {
+              alias: 'Site_Name'
+            },
+            "County": {
+              alias: 'County'
+            },
             "Drill_Year": {
               title: 'Drill year',
               controls: [
@@ -558,7 +662,7 @@
       ]
     }),
     new FilterGroup({
-      title: "Rock Core data",
+      title: "Rock Core",
       prop: 'Data_Type',
       'Data_Type': 'rock core',
       source: {
@@ -572,35 +676,91 @@
         fields: {
           // "OBJECTID": {},
           // "Shape": {},
-          // "WID": {},
+          "WID": {
+            alias: 'WID'
+          },
           // "Type": {},
           // "WUWN": {},
-          // "CountyName": {},
+          "CountyName": {
+            alias: 'County'
+          },
           // "CountyCode": {},
           // "CountySeqID ": {},
-          // "SiteName": {},
+          "SiteName": {
+            alias: 'Site_Name'
+          },
           // "SiteOwner": {},
           // "SiteDate": {},
           // "LocConf": {},
-          // "Elevation": {},
+          "Elevation": {
+            title: 'Elevation',
+            controls: [
+              new GTLTControl(false)
+            ]
+          },
           // "ElevAcc": {},
           // "ElevMeth": {},
           // "Notes": {},
-          // "Status": {},
+          "Status": {
+            title: 'Status',
+            controls: [
+              new SelectControl()
+            ]
+          },
           // "Assessment": {},
           // "Condition": {},
           // "Completeness": {},
-          // "CoreTop": {},
-          // "CoreBot": {},
-          // "CoreLen": {},
-          // "BoxCount": {},
+          "CoreTop": {
+            title: 'CoreTop',
+            controls: [
+              new GTLTControl(false)
+            ]
+          },
+          "CoreBot": {
+            title: 'CoreBot',
+            controls: [
+              new GTLTControl(false)
+            ]
+          },
+          "CoreLen": {
+            title: 'CoreLen',
+            controls: [
+              new GTLTControl(false)
+            ]
+          },
+          "BoxCount": {
+            title: 'BoxCount',
+            controls: [
+              new GTLTControl(false)
+            ]
+          },
           // "TopStratCode": {},
-          // "TopStratName": {},
+          "TopStratName": {
+            title: 'TopStratName',
+            controls: [
+              new SelectControl()
+            ]
+          },
           // "BotStratCode": {},
-          // "BotStratName": {},
-          // "Skeletonized": {},
+          "BotStratName": {
+            title: 'BotStratName',
+            controls: [
+              new SelectControl()
+            ]
+          },
+          "Skeletonized": {
+            title: 'Skeletonized',
+            controls: [
+              new SelectControl()
+            ]
+          },
           // "ShelfID": {},
-          // "BHGAvail": {},
+          "BHGAvail": {
+            title: 'BHGAvail',
+            controls: [
+              new SelectControl()
+            ]
+          },
           // "GeoLogAvail ": {},
           // "GeoLogType": {},
           // "LonDD": {},
@@ -1457,19 +1617,18 @@
     `;
     }
 
-    resolveKeyLookup(field) {
-      let result = (!keyLookup[field])?field:keyLookup[field].title;
-      return result;
-    }
+    // resolveKeyLookup(field) {
+    //   let result = (!keyLookup[field])?field:keyLookup[field].title;
+    //   return result;
+    // }
 
     renderFilterGroups() {
-      let name=0, config=1;
       return this.filterGroups.map((group, index) => litElement.html`
       <slot name="${index}"></slot>
       <app-collapsible class="group"
         ?open=${group.open} @open=${this._handle(group)}>
         <i slot="header-before" class="material-icons collapse-icon"></i>
-        <span slot="header">${group.title}</span>
+        <span slot="header">${group.title} data</span>
         ${(!group.toggleable)?'':litElement.html`
           <toggle-switch
             name="${group.title}"
@@ -1484,12 +1643,12 @@
             ${!(section.title)?'':litElement.html`
               <h2 class="section-title">${section.title}</h2>
             `}
-            ${Object.entries(section.fields).map((entry, index) => (!entry[config].controls)?'':litElement.html`
+            ${Object.entries(section.fields).map(([name, config], index) => (!config.controls)?'':litElement.html`
               <div class="field">
-              ${(entry[config].controls.length === 0)?'':entry[config].controls.map(control => litElement.html`
+              ${(config.controls.length === 0)?'':config.controls.map(control => litElement.html`
                 <td class="label">
                   <label for="${this.genId(index)}" >
-                    ${this.resolveKeyLookup(entry[name])}
+                    ${config.title}
                   </label>
                 </td>
                 <td class="selector" 
@@ -1497,7 +1656,7 @@
                   <input
                     type="hidden"
                     id="${control.id}"
-                    name="${entry[name]}">
+                    name="${config.fieldKey}">
                   ${control.next}
                 </td>
               `)}
@@ -1564,7 +1723,17 @@
         context.id = id;
         context.group = group;
         context.target = e.currentTarget.querySelector('#'+id);
-        context.prop = context.target.name;
+        const lookup = SiteData.propLookup[context.target.name];
+        const mappings = {};
+        if (group.prop && group[group.prop]) {
+          mappings[group[group.prop]] = lookup.field;
+        }
+        if (lookup.members) {
+          lookup.members.forEach(({source, field}) => {
+            mappings[source] = field;
+          });
+        }
+        context.prop = mappings;
         removeFromFilter(filter, id);
         let resolver = handle(context);
         if (resolver) {
@@ -1599,14 +1768,17 @@
       }
     }
 
-    init(uniques, layers) {
+    init(lookups, layers) {
       this.filterGroups.forEach((group) => {
+        let source = (group.prop && group[group.prop])?group[group.prop]:undefined;
         group.sections.forEach((section) => {
-          Object.entries(section.fields).forEach((field) => {
-            if (field[1].controls) {
-              field[1].controls.forEach((control) => {
+          Object.entries(section.fields).forEach(([key, field]) => {
+            if (field.controls) {
+              field.controls.forEach((control) => {
                 if (control.init) {
-                  control.init(uniques[field[0]]);
+                  const context = Object.assign({}, lookups[SiteData.buildFieldKey(source, key)]);
+                  context.layers = layers;
+                  control.init(context);
                 }
               });
             }
@@ -1640,9 +1812,9 @@
 
       const result = sources.reduce((result, layer) => {
         const activePoints = new Set();
-        Object.entries(layer._layers).forEach((ent) => {
-          if (resolve(ent[1].feature.properties)) {
-            activePoints.add('' + SiteMap.getSiteCode(ent[1].feature.properties));
+        Object.entries(layer._layers).forEach(([key, point]) => {
+          if (resolve(point.feature.properties)) {
+            activePoints.add('' + SiteMap.getSiteCode(point.feature.properties));
           }
         });
         result[layer.options.name] = activePoints;
@@ -1714,8 +1886,7 @@
 
   window.siteMap.once('init', function() {
     window.siteData = new SiteData(window.siteMap.layers);
-    window.aggrData = siteData.aggrData;
-    filter.init(window.siteData.uniques, window.siteMap.layers);
+    window.filter.init(SiteData.propLookup, window.siteMap.layers);
 
     var deselectFeature = function() {
       window.pdfPanel.hide();
