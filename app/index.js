@@ -754,7 +754,12 @@
               new SelectControl()
             ]
           },
-          // "ShelfID": {},
+          "ShelfID": {
+            title: 'Shelf',
+            controls: [
+              new ContainsControl()
+            ]
+          },
           "BHGAvail": {
             title: 'BHGAvail',
             controls: [
