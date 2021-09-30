@@ -360,17 +360,11 @@
   const ignoredKeys = [
     'Site_Code',
     'Data_Type',
-    'SiteName',
-    'Site_Name',
-    'Wid',
-    'ID',
-    'OBJECTID',
-    'County'
+    'Site_Name'
   ];
   const keyLookup = {
     'Site_Name': {title: 'Name', desc: ''}, //
-    'Wid': {title: 'WGNHS ID', desc: ''}, //
-    'WID': {title: 'WGNHS ID', desc: ''}, //Not sure how this is used yet.
+    'WID': {title: 'WGNHS ID', desc: ''}, //
     // Log
     'RecentLog': {title: 'Most recent log (year)', desc: ''}, //
     'MaxDepth': {title: 'Max depth (ft)', desc: ''}, //
@@ -447,14 +441,17 @@
       sections: [
         {
           fields: {
-            "Wid": {
-              alias: 'WID'
+            "WID": {
+              alias: 'WID',
+              hidden: true
             },
             "SiteName": {
-              alias: 'Site_Name'
+              alias: 'Site_Name',
+              hidden: true
             },
             "County": {
-              alias: 'County'
+              alias: 'County',
+              hidden: true
             },
             "RecentLog": {
               title: 'Most recent log (year)',
@@ -661,123 +658,123 @@
         }
       ]
     }),
-    new FilterGroup({
-      title: "Rock Core",
-      prop: 'Data_Type',
-      'Data_Type': 'rock core',
-      source: {
-        geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0/query?where=LonDD+is+not+null&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
-        user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0'
-      },
-      color: 'var(--map-symbol-2)',
-      toggleable: true,
-      active: true,
-      sections: [{
-        fields: {
-          // "OBJECTID": {},
-          // "Shape": {},
-          "WID": {
-            alias: 'WID'
-          },
-          // "Type": {},
-          // "WUWN": {},
-          "CountyName": {
-            alias: 'County'
-          },
-          // "CountyCode": {},
-          // "CountySeqID ": {},
-          "SiteName": {
-            alias: 'Site_Name'
-          },
-          "SiteOwner": {
-            title: 'SiteOwner',
-            controls: [
-              new ContainsControl()
-            ]
-          },
-          // "SiteDate": {},
-          // "LocConf": {},
-          "Elevation": {
-            title: 'Elevation',
-            controls: [
-              new GTLTControl(false)
-            ]
-          },
-          // "ElevAcc": {},
-          // "ElevMeth": {},
-          // "Notes": {},
-          "Status": {
-            title: 'Status',
-            controls: [
-              new SelectControl()
-            ]
-          },
-          // "Assessment": {},
-          // "Condition": {},
-          // "Completeness": {},
-          "CoreTop": {
-            title: 'CoreTop',
-            controls: [
-              new GTLTControl(false)
-            ]
-          },
-          "CoreBot": {
-            title: 'CoreBot',
-            controls: [
-              new GTLTControl(false)
-            ]
-          },
-          "CoreLen": {
-            title: 'CoreLen',
-            controls: [
-              new GTLTControl(false)
-            ]
-          },
-          "BoxCount": {
-            title: 'BoxCount',
-            controls: [
-              new GTLTControl(false)
-            ]
-          },
-          // "TopStratCode": {},
-          "TopStratName": {
-            title: 'TopStratName',
-            controls: [
-              new SelectControl()
-            ]
-          },
-          // "BotStratCode": {},
-          "BotStratName": {
-            title: 'BotStratName',
-            controls: [
-              new SelectControl()
-            ]
-          },
-          "Skeletonized": {
-            title: 'Skeletonized',
-            controls: [
-              new SelectControl()
-            ]
-          },
-          "ShelfID": {
-            title: 'Shelf',
-            controls: [
-              new ContainsControl()
-            ]
-          },
-          "BHGAvail": {
-            title: 'BHGAvail',
-            controls: [
-              new SelectControl()
-            ]
-          },
-          // "GeoLogAvail ": {},
-          // "GeoLogType": {},
-          // "LonDD": {},
-          // "LatDD": {},
-        }
-      }]
-    })
+    // new FilterGroup({
+    //   title: "Rock Core",
+    //   prop: 'Data_Type',
+    //   'Data_Type': 'rock core',
+    //   source: {
+    //     geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0/query?where=LonDD+is+not+null&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
+    //     user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0'
+    //   },
+    //   color: 'var(--map-symbol-2)',
+    //   toggleable: true,
+    //   active: true,
+    //   sections: [{
+    //     fields: {
+    //       // "OBJECTID": {},
+    //       // "Shape": {},
+    //       "WID": {
+    //         alias: 'WID'
+    //       },
+    //       // "Type": {},
+    //       // "WUWN": {},
+    //       "CountyName": {
+    //         alias: 'County'
+    //       },
+    //       // "CountyCode": {},
+    //       // "CountySeqID ": {},
+    //       "SiteName": {
+    //         alias: 'Site_Name'
+    //       },
+    //       "SiteOwner": {
+    //         title: 'SiteOwner',
+    //         controls: [
+    //           new ContainsControl()
+    //         ]
+    //       },
+    //       // "SiteDate": {},
+    //       // "LocConf": {},
+    //       "Elevation": {
+    //         title: 'Elevation',
+    //         controls: [
+    //           new GTLTControl(false)
+    //         ]
+    //       },
+    //       // "ElevAcc": {},
+    //       // "ElevMeth": {},
+    //       // "Notes": {},
+    //       "Status": {
+    //         title: 'Status',
+    //         controls: [
+    //           new SelectControl()
+    //         ]
+    //       },
+    //       // "Assessment": {},
+    //       // "Condition": {},
+    //       // "Completeness": {},
+    //       "CoreTop": {
+    //         title: 'CoreTop',
+    //         controls: [
+    //           new GTLTControl(false)
+    //         ]
+    //       },
+    //       "CoreBot": {
+    //         title: 'CoreBot',
+    //         controls: [
+    //           new GTLTControl(false)
+    //         ]
+    //       },
+    //       "CoreLen": {
+    //         title: 'CoreLen',
+    //         controls: [
+    //           new GTLTControl(false)
+    //         ]
+    //       },
+    //       "BoxCount": {
+    //         title: 'BoxCount',
+    //         controls: [
+    //           new GTLTControl(false)
+    //         ]
+    //       },
+    //       // "TopStratCode": {},
+    //       "TopStratName": {
+    //         title: 'TopStratName',
+    //         controls: [
+    //           new SelectControl()
+    //         ]
+    //       },
+    //       // "BotStratCode": {},
+    //       "BotStratName": {
+    //         title: 'BotStratName',
+    //         controls: [
+    //           new SelectControl()
+    //         ]
+    //       },
+    //       "Skeletonized": {
+    //         title: 'Skeletonized',
+    //         controls: [
+    //           new SelectControl()
+    //         ]
+    //       },
+    //       "ShelfID": {
+    //         title: 'Shelf',
+    //         controls: [
+    //           new ContainsControl()
+    //         ]
+    //       },
+    //       "BHGAvail": {
+    //         title: 'BHGAvail',
+    //         controls: [
+    //           new SelectControl()
+    //         ]
+    //       },
+    //       // "GeoLogAvail ": {},
+    //       // "GeoLogType": {},
+    //       // "LonDD": {},
+    //       // "LatDD": {},
+    //     }
+    //   }]
+    // })
   ];
 
   const RestylingCircleMarker = L.CircleMarker.extend({
@@ -922,7 +919,7 @@
             let cache = lookup[siteCode] || {
               'Site_Code': siteCode,
               'Site_Name': siteName,
-              'Wid': wid,
+              'WID': wid,
               'Latitude': latLon['lat'].toFixed(6),
               'Longitude': latLon['lng'].toFixed(6),
               point: obj,
@@ -1231,11 +1228,11 @@
     <table-layout .info=${this.prepInfo()} .context=${this.context}></table-layout>
     <pdf-view-button
       .panel=${this.context.pdfpanel}
-      src="${'https://data.wgnhs.wisc.edu/borehole-geophysics/pdf/' + this.info.Wid + '.pdf'}">
+      src="${'https://data.wgnhs.wisc.edu/borehole-geophysics/pdf/' + this.info.WID + '.pdf'}">
       <span slot="download-text">Download PDF</span>
     </pdf-view-button>
     <download-button
-      src="${'https://data.wgnhs.wisc.edu/borehole-geophysics/las/' + this.info.Wid + '.las'}">
+      src="${'https://data.wgnhs.wisc.edu/borehole-geophysics/las/' + this.info.WID + '.las'}">
       Download LAS
     </download-button>
     `;
@@ -1434,7 +1431,7 @@
     render() {
       let Latitude = (this.siteinfo)?this.siteinfo['Latitude']:null;
       let Longitude = (this.siteinfo)?this.siteinfo['Longitude']:null;
-      let WID = (this.siteinfo)?this.siteinfo['Wid']:null;
+      let WID = (this.siteinfo)?this.siteinfo['WID']:null;
       return litElement.html`
       ${(!this.siteinfo)? '' : litElement.html`
         <div class="header">
