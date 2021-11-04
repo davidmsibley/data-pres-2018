@@ -450,7 +450,7 @@
       },
       color: 'var(--map-symbol-0)',
       toggleable: true,
-      active: false,
+      active: true,
       sections: [
         {
           fields: {
@@ -602,7 +602,7 @@
       },
       color: 'var(--map-symbol-1)',
       toggleable: true,
-      active: false,
+      active: true,
       sections: [
         {
           fields: {
@@ -694,7 +694,7 @@
       },
       color: 'var(--map-symbol-2)',
       toggleable: true,
-      active: false,
+      active: true,
       sections: [{
         fields: {
           // "OBJECTID": {},
@@ -2012,11 +2012,11 @@
     }
   });
 
-  document.addEventListener('filter-change', function(e) {
-    if (window.router.router.globals.current.name) {
-      window.router.router.stateService.go(window.router.router.globals.current.name, {source: e.detail.incl.map((el) => el.context.value)});
-    }
-  });
+  // document.addEventListener('filter-change', function(e) {
+  //   if (window.router.router.globals.current.name) {
+  //     window.router.router.stateService.go(window.router.router.globals.current.name, {source: e.detail.incl.map((el) => el.context.value)});
+  //   }
+  // });
 
   document.addEventListener('filtered', function(e) {
     window.siteMap.updatePoints(e.detail.activePoints);
