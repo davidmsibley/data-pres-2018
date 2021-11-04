@@ -49,8 +49,9 @@
             return !context.group.prop || context.group[context.group.prop] === feature[context.group.prop]
           },
           resolve: function(feature) {
+            let prop = feature[context.prop[feature['Data_Type']]];
             // filter out features without the property
-            let isValid = !!feature[context.prop[feature['Data_Type']]];
+            let isValid = !!prop && String(prop).toUpperCase() !== 'FALSE' && String(prop).toUpperCase() !== 'NO';
             return isValid;
           }
         };
@@ -319,9 +320,9 @@
 
     static get propLookup() {
       let result = {};
-      filterLookup.forEach((fg) => {
-        fg.sections.forEach((section) => {
-          Object.entries(section.fields).forEach(([field, config]) => {
+      filterLookup.forEach((fg, fgIndex) => {
+        fg.sections.forEach((section, sectionIndex) => {
+          Object.entries(section.fields).forEach(([field, config], fieldIndex) => {
             let source = (fg.prop && fg[fg.prop])?fg[fg.prop]:undefined;
             let fieldKey = SiteData.buildFieldKey(source, field);
             if (!result[fieldKey]) {
@@ -341,6 +342,7 @@
               }
               result[alias].members.push(result[fieldKey]);
             }
+            result[fieldKey].sortOrder = (fgIndex * 100000) + (sectionIndex * 1000) + (fieldIndex * 1);
             // result[fieldKey].assist = {};
             // if (config.controls) {
             //   for (let control of config.controls) {
@@ -355,6 +357,40 @@
       });
       return result;
     }
+
+    static getFieldConfiguration(key, layoutName) {
+      let fieldKey = SiteData.buildFieldKey(layoutName, key);
+      return SiteData.propLookup[fieldKey];
+    }
+
+    static getFieldTitle(key, layoutName) {
+      let result = key;
+      let config = SiteData.getFieldConfiguration(key, layoutName);
+      if (!config) {
+        result += '*';
+      } else if (config.title) {
+        result = config.title;
+      }
+      return result;
+    }
+
+    static getFieldDescription(key, layoutName) {
+      let result = '';
+      let config = SiteData.getFieldConfiguration(key, layoutName);
+      if (config && config.desc) {
+        result = config.desc;
+      }
+      return result;
+    }
+
+    static getFieldHidden(key, layoutName) {
+      let result = false;
+      let config = SiteData.getFieldConfiguration(key, layoutName);
+      if (!config || config.hidden) {
+        result = true;
+      }
+      return result;
+    }
   }
 
   const ignoredKeys = [
@@ -362,42 +398,10 @@
     'Data_Type',
     'Site_Name'
   ];
-  const keyLookup = {
-    'Site_Name': {title: 'Name', desc: ''}, //
-    'WID': {title: 'WGNHS ID', desc: ''}, //
-    // Log
-    'RecentLog': {title: 'Most recent log (year)', desc: ''}, //
-    'MaxDepth': {title: 'Max depth (ft)', desc: ''}, //
-    'Norm_Res': {title: 'Normal Resistivity', desc: ''}, //
-    'Caliper': {title: 'Caliper', desc: ''}, //
-    'Gamma': {title: 'Natural Gamma', desc: ''}, //
-    'SP': {title: 'Spontaneous (Self) Potential', desc: ''}, //
-    'SPR': {title: 'Single Point Resistivity', desc: ''}, //
-    'Spec_Gamma': {title: 'Spectral Gamma', desc: ''}, //
-    'Fluid_Cond': {title: 'Fluid Conductivity', desc: ''}, //
-    'Flow_Spin': {title: 'Spinner Flow Meter', desc: ''}, //
-    'Flow_HP': {title: 'HeatPulse Flow Meter', desc: ''}, //
-    'Fluid_Temp': {title: 'Fluid Temperature', desc: ''}, //
-    'Fluid_Res': {title: 'Fluid Resistivity', desc: ''}, //
-    'OBI': {title: 'Optical Borehole Image (OBI)', desc: ''}, //
-    'ABI': {title: 'Acoustic Borehole Image (ABI)', desc: ''}, //
-    'Video': {title: 'Video', desc: ''}, //
-    // Quat
-    'Field_ID': {title: 'Field ID', desc: ''}, //Not Displayed
-    'Project': {title: 'Project', desc: ''}, //
-    'Drill_Year': {title: 'Drill year', desc: ''}, //
-    'Depth_Ft': {title: 'Depth (ft)', desc: ''}, //
-    'Drill_Method': {title: 'Drill Method', desc: ''}, //
-    'Subsamples': {title: 'Subsamples', desc: ''}, //
-    'Photos': {title: 'Core Photos', desc: ''}, //
-    'Grainsize': {title: 'Grainsize', desc: ''}, //
-    'Age_Data': {title: 'Age data', desc: ''}, //
-    'Proxy_Data': {title: 'Proxy data', desc: ''}, //Nothing Actually Has Proxy Data
-  };
 
   const filterLookup = [
     new FilterGroup({
-      title: "Site information",
+      title: "Site Information",
       open: true,
       sections: [
         {
@@ -420,15 +424,24 @@
                 new TextControl()
               ]
             },
-            "Lat_Lon": {
-              //TODO!
+            "Latitude": {
+              title: 'Latitude',
+              // controls: [
+              //   new ContainsControl()
+              // ]
+            },
+            "Longitude": {
+              title: 'Longitude',
+              // controls: [
+              //   new ContainsControl()
+              // ]
             }
           }
         }
       ]
     }),
     new FilterGroup({
-      title: "Geophysical Log",
+      title: "Geophysical Log data",
       prop: 'Data_Type',
       'Data_Type': 'geophysical log',
       source: {
@@ -437,7 +450,7 @@
       },
       color: 'var(--map-symbol-0)',
       toggleable: true,
-      active: true,
+      active: false,
       sections: [
         {
           fields: {
@@ -571,11 +584,16 @@
             },
 
           }
+        },
+        {
+          fields: {
+            "Data available:": {}
+          }
         }
       ]
     }),
     new FilterGroup({
-      title: "Quaternary Core",
+      title: "Quaternary Core data",
       prop: 'Data_Type',
       'Data_Type': 'quaternary core',
       source: {
@@ -584,18 +602,21 @@
       },
       color: 'var(--map-symbol-1)',
       toggleable: true,
-      active: true,
+      active: false,
       sections: [
         {
           fields: {
             "WGNHS_ID": {
-              alias: 'WID'
+              alias: 'WID',
+              hidden: true
             },
             "Site_Name": {
-              alias: 'Site_Name'
+              alias: 'Site_Name',
+              hidden: true
             },
             "County": {
-              alias: 'County'
+              alias: 'County',
+              hidden: true
             },
             "Drill_Year": {
               title: 'Drill year',
@@ -655,126 +676,112 @@
               hidden: true
             }
           }
+        },
+        {
+          fields: {
+            "Analyses available:": {}
+          }
         }
       ]
     }),
-    // new FilterGroup({
-    //   title: "Rock Core",
-    //   prop: 'Data_Type',
-    //   'Data_Type': 'rock core',
-    //   source: {
-    //     geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0/query?where=LonDD+is+not+null&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
-    //     user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0'
-    //   },
-    //   color: 'var(--map-symbol-2)',
-    //   toggleable: true,
-    //   active: true,
-    //   sections: [{
-    //     fields: {
-    //       // "OBJECTID": {},
-    //       // "Shape": {},
-    //       "WID": {
-    //         alias: 'WID'
-    //       },
-    //       // "Type": {},
-    //       // "WUWN": {},
-    //       "CountyName": {
-    //         alias: 'County'
-    //       },
-    //       // "CountyCode": {},
-    //       // "CountySeqID ": {},
-    //       "SiteName": {
-    //         alias: 'Site_Name'
-    //       },
-    //       "SiteOwner": {
-    //         title: 'SiteOwner',
-    //         controls: [
-    //           new ContainsControl()
-    //         ]
-    //       },
-    //       // "SiteDate": {},
-    //       // "LocConf": {},
-    //       "Elevation": {
-    //         title: 'Elevation',
-    //         controls: [
-    //           new GTLTControl(false)
-    //         ]
-    //       },
-    //       // "ElevAcc": {},
-    //       // "ElevMeth": {},
-    //       // "Notes": {},
-    //       "Status": {
-    //         title: 'Status',
-    //         controls: [
-    //           new SelectControl()
-    //         ]
-    //       },
-    //       // "Assessment": {},
-    //       // "Condition": {},
-    //       // "Completeness": {},
-    //       "CoreTop": {
-    //         title: 'CoreTop',
-    //         controls: [
-    //           new GTLTControl(false)
-    //         ]
-    //       },
-    //       "CoreBot": {
-    //         title: 'CoreBot',
-    //         controls: [
-    //           new GTLTControl(false)
-    //         ]
-    //       },
-    //       "CoreLen": {
-    //         title: 'CoreLen',
-    //         controls: [
-    //           new GTLTControl(false)
-    //         ]
-    //       },
-    //       "BoxCount": {
-    //         title: 'BoxCount',
-    //         controls: [
-    //           new GTLTControl(false)
-    //         ]
-    //       },
-    //       // "TopStratCode": {},
-    //       "TopStratName": {
-    //         title: 'TopStratName',
-    //         controls: [
-    //           new SelectControl()
-    //         ]
-    //       },
-    //       // "BotStratCode": {},
-    //       "BotStratName": {
-    //         title: 'BotStratName',
-    //         controls: [
-    //           new SelectControl()
-    //         ]
-    //       },
-    //       "Skeletonized": {
-    //         title: 'Skeletonized',
-    //         controls: [
-    //           new SelectControl()
-    //         ]
-    //       },
-    //       "ShelfID": {
-    //         title: 'Shelf',
-    //         controls: [
-    //           new ContainsControl()
-    //         ]
-    //       },
-    //       "BHGAvail": {
-    //         title: 'BHGAvail',
-    //         controls: [
-    //           new SelectControl()
-    //         ]
-    //       },
-    //       // "GeoLogAvail ": {},
-    //       // "GeoLogType": {},
-    //       // "LonDD": {},
-    //       // "LatDD": {},
-    //     }
-    //   }]
-    // })
+    new FilterGroup({
+      title: "Rock Core data",
+      prop: 'Data_Type',
+      'Data_Type': 'rock core',
+      source: {
+        geojson: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0/query?where=LonDD+is+not+null&inSR=4326&outFields=*&returnGeometry=true&geometryPrecision=6&outSR=4326&f=geojson',
+        user: 'https://data.wgnhs.wisc.edu/arcgis/rest/services/dev/rock_core/MapServer/0'
+      },
+      color: 'var(--map-symbol-2)',
+      toggleable: true,
+      active: false,
+      sections: [{
+        fields: {
+          // "OBJECTID": {},
+          // "Shape": {},
+          "WID": {
+            alias: 'WID',
+            hidden: true
+          },
+          // "Type": {},
+          // "WUWN": {},
+          "CountyName": {
+            alias: 'County',
+            hidden: true
+          },
+          // "CountyCode": {},
+          // "CountySeqID ": {},
+          "SiteName": {
+            alias: 'Site_Name',
+            hidden: true
+          },
+          "SiteOwner": {
+            title: 'Site Owner',
+            controls: [
+              new ContainsControl()
+            ]
+          },
+          "Elevation": {
+            title: 'Elevation'
+          },
+          // "ElevAcc": {},
+          // "ElevMeth": {},
+          // "SiteDate": {},
+          // "LocConf": {},
+          "CoreTop": {
+            title: 'Top of Core Depth'
+          },
+          // "TopStratCode": {},
+          "TopStratName": {
+            title: 'Top Stratigraphic Name',
+            controls: [
+              new SelectControl()
+            ]
+          },
+          "CoreBot": {
+            title: 'Bottom of Core Depth'
+          },
+          // "BotStratCode": {},
+          "BotStratName": {
+            title: 'Bottom Stratigraphic Name',
+            controls: [
+              new SelectControl()
+            ]
+          },
+          
+          "CoreLen": {
+            title: 'Length of Core'
+          },
+          "BoxCount": {
+            title: 'Box Count'
+          },
+          "ShelfID": {
+            title: 'Shelf'
+          },
+          "Skeletonized": {
+            title: 'Skeletonized'
+          },
+          "BHGAvail": {
+            title: 'Borehole Geophysical Log Available',
+            hidden: true,
+            controls: [
+              new CheckboxControl()
+            ]
+          },
+          // "GeoLogAvail ": {},
+          // "GeoLogType": {},
+          // "Notes": {},
+          "Status": {
+            title: 'Status'
+          },
+          // "Assessment": {},
+          // "Condition": {},
+          // "Completeness": {},
+          // "LonDD": {},
+          // "LatDD": {},
+        }
+      }]
+    })
   ];
 
   const RestylingCircleMarker = L.CircleMarker.extend({
@@ -1095,14 +1102,18 @@
       let entries = Object.entries(this.info).filter((el) => {
         return !ignoredKeys.includes(el[key]);
       }).filter((el) => {
+        return !SiteData.getFieldHidden(el[key], this.context.layoutName);
+      }).filter((el) => {
         return !!el[value];
-      }).map((el, index) => litElement.html`
-      <dt class="label" title="${(keyLookup[el[key]])?keyLookup[el[key]].desc:el[key]}">
+      });
+      entries.sort((a, b) => SiteData.getFieldConfiguration(a[key], this.context.layoutName).sortOrder - SiteData.getFieldConfiguration(b[key], this.context.layoutName).sortOrder);
+      entries = entries.map((el, index) => litElement.html`
+      <dt class="label" title="${SiteData.getFieldDescription(el[key], this.context.layoutName)}">
         <label for="${this.genId(index)}" >
-          ${(keyLookup[el[key]])?keyLookup[el[key]].title:el[key]}
+          ${SiteData.getFieldTitle(el[key], this.context.layoutName)}
         </label>
       </dt>
-      <dd class="detail" title="${(keyLookup[el[key]])?keyLookup[el[key]].desc:el[key]}">
+      <dd class="detail" title="${SiteData.getFieldDescription(el[key], this.context.layoutName)}">
         <span id="${this.genId(index)}">
           ${el[value]}
         </span>
@@ -1250,7 +1261,7 @@
       const fields = this.getFields(el => el.bundled);
       const names = Object.entries(fields)
         .filter(kv => !!kv[1])
-        .map(kv => (keyLookup[kv[0]])?keyLookup[kv[0]].title:kv[0]);
+        .map(kv => SiteData.getFieldTitle(kv[0], this.context.layoutName));
       return {
         'Data available:': names.map(val => litElement.html`${val}<br>`)
       };
@@ -1305,7 +1316,7 @@
     }
     render() {
       return litElement.html`
-    <table-layout .info=${this.prepInfo()}></table-layout>
+    <table-layout .info=${this.prepInfo()} .context=${this.context}></table-layout>
     `;
     }
 
@@ -1321,7 +1332,7 @@
       const fields = this.getFields(el => el.bundled);
       let names = Object.entries(fields)
         .filter(kv => !!kv[1])
-        .map(kv => (keyLookup[kv[0]])?keyLookup[kv[0]].title:kv[0])
+        .map(kv => SiteData.getFieldTitle(kv[0], this.context.layoutName))
         .map(val => litElement.html`${val}<br>`);
       if (names.length < 1) {
         names = null;
@@ -1425,7 +1436,7 @@
 
     renderData(info, layoutName) {
       const layout = layoutResolver.getLayout(layoutName);
-      return layout(info, this);
+      return layout(info, {layoutName, pdfpanel: this.pdfpanel});
     }
 
     render() {
@@ -1446,7 +1457,7 @@
         ${this.renderData({
           Latitude, Longitude, WID
         })}
-        ${this.siteinfo.datas.map((props) => litElement.html`
+        ${this.siteinfo.datas.slice().reverse().map((props) => litElement.html`
           <app-collapsible open>
             <span slot="header" class="name">${props['Data_Type']}</span>
             <div slot="content">
@@ -1624,18 +1635,13 @@
     `;
     }
 
-    // resolveKeyLookup(field) {
-    //   let result = (!keyLookup[field])?field:keyLookup[field].title;
-    //   return result;
-    // }
-
     renderFilterGroups() {
       return this.filterGroups.map((group, index) => litElement.html`
       <slot name="${index}"></slot>
       <app-collapsible class="group"
-        ?open=${group.open} @open=${this._handle(group)}>
+        ?open=${group.open}>
         <i slot="header-before" class="material-icons collapse-icon"></i>
-        <span slot="header">${group.title} data</span>
+        <span slot="header">${group.title}</span>
         ${(!group.toggleable)?'':litElement.html`
           <toggle-switch
             name="${group.title}"
@@ -1681,24 +1687,6 @@
     `);
     }
 
-    get _eventHandlers() {
-      return {
-        'open' : (context, e) => {
-          context.open = e.detail.value;
-        }
-      }
-    }
-
-    _handle(context) {
-      return (e) => {
-        const handler = this._eventHandlers[e.type];
-        if (handler) {
-          handler(context, e);
-          this.requestUpdate('handle_'+e.type);
-        }
-      }
-    }
-
     _handleGroup(group, type) {
       const id = group.id;
       const handle = group.activate.bind(group);
@@ -1730,7 +1718,7 @@
         context.id = id;
         context.group = group;
         context.target = e.currentTarget.querySelector('#'+id);
-        const lookup = SiteData.propLookup[context.target.name];
+        const lookup = SiteData.getFieldConfiguration(context.target.name);
         const mappings = {};
         if (group.prop && group[group.prop]) {
           mappings[group[group.prop]] = lookup.field;
@@ -1750,6 +1738,23 @@
       }
     }
 
+    handleRouteChange() {
+      const activePoints = MapFilter.runFilter({
+        matchClass: this.matchClass,
+        incl: this.include,
+        filt: this.filter,
+        sources: this.sources
+      });
+      const counts = MapFilter.getResultsInfo(
+        this.matchClass,
+        this.include,
+        this.filter,
+        this.sources,
+        activePoints
+        );
+      wgnhsCommon.dispatch(this, 'filtered', {activePoints, counts}, true, true);
+    }
+
     updated(changed) {
       const isNeeded = (
         changed.has('matchClass') ||
@@ -1758,24 +1763,17 @@
         changed.has('sources'));
 
       if (this.sources && isNeeded) {
-        const activePoints = MapFilter.runFilter({
+        wgnhsCommon.dispatch(this, 'filter-change', {
           matchClass: this.matchClass,
           incl: this.include,
           filt: this.filter,
           sources: this.sources
-        });
-        const counts = MapFilter.getResultsInfo(
-          this.matchClass,
-          this.include,
-          this.filter,
-          this.sources,
-          activePoints
-          );
-        wgnhsCommon.dispatch(this, 'filtered', {activePoints, counts}, true, true);
+        }, true, true);
+        this.handleRouteChange();
       }
     }
 
-    init(lookups, layers) {
+    init(layers) {
       this.filterGroups.forEach((group) => {
         let source = (group.prop && group[group.prop])?group[group.prop]:undefined;
         group.sections.forEach((section) => {
@@ -1783,7 +1781,7 @@
             if (field.controls) {
               field.controls.forEach((control) => {
                 if (control.init) {
-                  const context = Object.assign({}, lookups[SiteData.buildFieldKey(source, key)]);
+                  const context = Object.assign({}, SiteData.getFieldConfiguration(key, source));
                   context.layers = layers;
                   control.init(context);
                 }
@@ -1840,7 +1838,7 @@
         });
         stats.filteredBy = filter.reduce((result, el) => {
           if (el.context.group[el.context.group.prop] === layer.options.name) {
-            result.push((keyLookup[el.context.prop])?keyLookup[el.context.prop].title:el.context.prop);
+            result.push(SiteData.getFieldTitle(el.context.prop[layer.options.name], layer.options.name));
           }
           return result;
         }, []);
@@ -1893,7 +1891,7 @@
 
   window.siteMap.once('init', function() {
     window.siteData = new SiteData(window.siteMap.layers);
-    window.filter.init(SiteData.propLookup, window.siteMap.layers);
+    window.filter.init(window.siteMap.layers);
 
     var deselectFeature = function() {
       window.pdfPanel.hide();
@@ -1910,27 +1908,51 @@
       return true;
     }
     window.router = new wgnhsRouter.SiteRouter();
+    // window.router.router.plugin(Visualizer);
     window.router.addRoute({
+      name: 'app',
+      url: '?source',
+      params: {
+        'source': {
+          array: true,
+          value: []
+        }
+      },
+      redirectTo: 'entry',
+      abstract: true,
+      // onEnter: function(trans, state) {
+      //   console.log('enter app')
+      // },
+      // onExit: function(trans, state) {
+      //   console.log('exit app')
+      // },
+      // onRetain: function(trans, state) {
+      //   console.log('retain app')
+      // },
+    });
+    window.router.addRoute({
+      parent: 'app',
       name: 'entry',
       url: '/',
       onEnter: function(trans, state) {
-        // console.log('route-entry');
+        trans.params();
+        // console.log('route-entry', params);
         window.siteMap.clearSelection();
         deselectFeature();
         document.querySelector('#app').setAttribute('data-view', 'app');
         window.sidebar.switchTab('default');
         window.siteMap.setVisibility(true);
       },
-      onExit: function(trans, state) {
-
-      },
+      // onExit: function(trans, state) {
+      //   console.log('exit entry')
+      // },
     });
     window.router.addRoute({
+      parent: 'app',
       name: 'view',
       url: '/view/:Site_Code',
       // params: {
       //   'Site_Code': {
-      //     array: true
       //   }
       // },
       onEnter: function(trans, state) {
@@ -1950,44 +1972,19 @@
           window.router.clearRoute();
         }
       },
-      onExit: function(trans, state) {
-
-      },
-    });
-    window.router.addRoute({
-      name: 'print',
-      url: '/print/:Site_Code',
-      // params: {
-      //   'Site_Code': {
-      //     array: true
-      //   }
+      // onExit: function(trans, state) {
+      //   console.log('exit view')
       // },
-      onEnter: function(trans, state) {
-        // console.log('route-print');
-        let params = trans.params();
-        let attr = window.siteMap.selectSite(params);
-        if (attr) {
-          document.querySelectorAll('site-details').forEach(function(details) {
-            details['printLayout'] = true;
-          });
-          selectFeature(attr).then(() => {
-            document.querySelector('#app').removeAttribute('data-view');
-            window.sidebar.switchTab('details');
-            window.siteMap.setVisibility(false);
-          });
-        } else {
-          window.router.clearRoute();
-        }
-      },
-      onExit: function(trans, state) {
-
-      },
     });
+
     window.router.router.transitionService.onEnter({}, ()=>{
       document.querySelector('#spinner').setAttribute('data-closed', true);
     });
     // Start the router
-    window.router.start();
+    // window.router.router.trace.enable(1);
+    // window.router.start();
+    window.router.router.urlService.listen();
+    window.router.router.urlService.sync();
 
     window.siteMap.on('interaction', (params) => {
       if (params['Site_Code']) {
@@ -2006,20 +2003,18 @@
     window.siteMap.zoomToPoint(e.detail.params);
   });
 
-  document.addEventListener('toggle-print', function(e) {
-    if (e.detail.on) {
-      window.router.setRoute('print', e.detail.params);
-    } else {
-      window.router.setRoute('view', e.detail.params);
-    }
-  });
-
   document.addEventListener('toggle-pdf-panel', function(e) {
     window.siteMap.setVisibility(e.detail.closed);
     if (e.detail.closed) {
       window.pdfPanel.setAttribute('data-closed', true);
     } else {
       window.pdfPanel.removeAttribute('data-closed');
+    }
+  });
+
+  document.addEventListener('filter-change', function(e) {
+    if (window.router.router.globals.current.name) {
+      window.router.router.stateService.go(window.router.router.globals.current.name, {source: e.detail.incl.map((el) => el.context.value)});
     }
   });
 
