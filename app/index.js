@@ -739,9 +739,9 @@
           "ElevMeth": {
             title: 'Elevation Method'
           },
-          "ElevAcc": {
-            title: 'Elevation Accuracy (ft)'
-          },
+          // "ElevAcc": {
+          //   title: 'Elevation Accuracy (ft)'
+          // },
           // "SiteDate": {},
           // "LocConf": {},
           "CoreTop": {
