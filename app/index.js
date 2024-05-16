@@ -853,6 +853,8 @@
 
   RestylingCircleMarker.calcRadius = (a) => Math.max(Math.floor(a/1.5),3);
 
+  const api_key = "AAPK2e0a5cf929c34c46a7e4272f2ead6aa4ilvTW75nWcHxARC1ZF--cRIhmfhAJcsRkjdmZQr6C2CDqUxeqMF1yu6E7qzaEq_q"; 
+
   class SiteMap extends window.L.Evented {
     constructor() {
       super();
@@ -871,37 +873,28 @@
 
        
       /* ~~~~~~~~ Basemap Layers ~~~~~~~~ */
-       
-      // // basemaps from Open Street Map
-      // const osmhot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-      //   attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors', 
-      //   label: "OpenStreetMap Humanitarian"
-      // });
 
-      // // CARTO Positron
-      // const positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-      //   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      //   label: 'CARTO Positron'
-      // });
+      // Esri basemaps     
+      // other basemap options can be found here: https://developers.arcgis.com/esri-leaflet/maps/change-the-basemap-style-v2/ 
 
-      // CARTO Voyager
-      const voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        label: 'CARTO Voyager'
-      });
-
-      // Esri basemaps 
-      const esrisat = L.esri.basemapLayer('Imagery', {label: "Esri Satellite"});
+      //stage any basemap from Esri: 
+      function esriBasemap(style){
+        return L.esri.Vector.vectorBasemapLayer(style, {
+          apiKey: api_key,  
+          version:2
+        })
+      }
       
-      // add the basemap control to the map  
-      var basemaps = [voyager, esrisat]; 
-      basemaps[0].addTo(map);
-      map.addControl(L.control.basemaps({
-         basemaps: basemaps, 
-         tileX: 0, 
-         tileY: 0, 
-         tileZ: 1
-      })); 
+      const basemapLayers = {
+
+        "Streets Basemap": esriBasemap("arcgis/streets").addTo(map), 
+        "Topographic Basemap": esriBasemap("arcgis/topographic"),
+        "Imagery Basemap": esriBasemap("arcgis/imagery") 
+
+    };
+
+    //add a basemap controller to the map. 
+    L.control.layers(basemapLayers, null, {collapsed:true}).addTo(map); 
 
       let sources = filterLookup.reduceRight((result, curr) => {
         if (curr.source && curr.source.geojson) {
